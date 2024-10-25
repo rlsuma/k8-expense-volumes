@@ -10,24 +10,37 @@ spec:
   resources:
     requests:
       storage: 4Gi
-# ---
-# apiVersion: v1
-# kind: Pod
-# metadata:
-#   name: nginx-dynamic
-#   labels:
-#     purpose: ebs-static
-#     project: expense
-# spec:
-#   containers: 
-#   - name: nginx
-#     image: nginx
-#     volumeMounts:
-#     - name: persistent-storage
-#       mountPath: /usr/share/nginx/html
-#   nodeSelector:
-#     topology.kubernetes.io/zone: us-east-1a
-#   volumes:
-#   - name: persistent-storage
-#     persistentVolumeClaim:
-#       claimName: ebs-dynamic
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mysql
+  namespace: expense
+spec:
+  selector:
+    matchLabels:
+      component: mysql
+      project: expense
+      tier: db  
+  serviceName: "nginx"
+  replicas: 3 # by default is 1
+  template:
+    metadata:
+      labels:
+       component: mysql
+       project: expense
+       tier: db  
+    spec:
+      containers:
+      - name: mysql
+        image: joindevops/mysql:v1
+        ports:
+        - containerPort: 80
+          name: web
+        volumeMounts:
+        - name: mysql
+          mountPath: /var/lib/mysql
+      volumes:
+      - name: mysql
+        persistentvolumeClaim:
+          claimName: mysql
